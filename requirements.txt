@@ -1,4 +1,5 @@
 notebook
 jupyterlab
 jupyter-server-proxy
+streamlit==1.42.0
 markdown
