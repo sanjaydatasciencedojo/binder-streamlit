@@ -116,14 +116,24 @@ def export_resume(file_name, css_content):
     # Generate PDF and Provide Download Option
     if st.button("📥 Generate PDF (.pdf)", use_container_width=True):
         if st.session_state.resume_content.strip():
-            temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+            temp_html_path = os.path.join(SAVE_DIR, "temp_resume.html")
             pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
             try:
-                # Embed CSS into Markdown content
-                styled_html = f"<style>{css_content}</style>\n{markdown.markdown(st.session_state.resume_content)}"
-                save_file(temp_md_path, styled_html)  # Save styled HTML as Markdown
+                # Convert Markdown to HTML with embedded CSS
+                styled_html = f"""
+                <html>
+                    <head>
+                        <style>{css_content}</style>
+                    </head>
+                    <body>
+                        {markdown.markdown(st.session_state.resume_content)}
+                    </body>
+                </html>
+                """
+                save_file(temp_html_path, styled_html)  # Save styled HTML
+                # Generate PDF using pandoc with xelatex
                 subprocess.run(
-                    ["pandoc", temp_md_path, "-o", pdf_file_path],
+                    ["pandoc", temp_html_path, "-o", pdf_file_path, "--pdf-engine=xelatex"],
                     check=True
                 )
                 st.success(f"PDF file generated successfully at: {pdf_file_path}")
@@ -134,7 +144,7 @@ def export_resume(file_name, css_content):
                         file_name=pdf_file_name,
                         mime="application/pdf"
                     )
-                os.remove(temp_md_path)
+                os.remove(temp_html_path)
             except Exception as error:
                 st.error(f"⚠️ Oops! Something went wrong: {str(error)}")
         else:
