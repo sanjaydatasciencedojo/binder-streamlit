@@ -1,29 +1,29 @@
+import os
 import streamlit as st
 import subprocess
-import os
 import markdown
 from datetime import datetime
 
 # Application Constants
 INPUT_FILE = "resume.md"
-OUTPUT_FILE = "resume.pdf"
+OUTPUT_FILE = "professional_resume.pdf"
+SAVE_DIR = "/home/jovyan/streamlit"  # Directory to save files on the server
+os.makedirs(SAVE_DIR, exist_ok=True)  # Create the directory if it doesn't exist <button class="citation-flag" data-index="5">
+
 DEFAULT_TEMPLATE = """# Your Full Name
 ## Professional Title
 ### Core Skills
 - Project Management, Team Leadership
 - Technical Writing, Data Analysis
 - Software Development, Cloud Solutions
-
 ### Work Experience
 **Senior Developer**, Tech Innovations (2020-Present)
 - Led team of 15+ developers
 - Implemented automated deployment systems
 - Designed cloud architecture solutions
-
 **Junior Developer**, Startup Hub (2018-2020)
 - Developed customer-facing web applications
 - Managed database optimization
-
 ### Education
 **Computer Science Degree**  
 University of Technology (2014-2018)  
@@ -126,10 +126,10 @@ def main():
         st.session_state.resume_content = DEFAULT_TEMPLATE
     if 'last_update' not in st.session_state:
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
-
+    
     # Create two-column layout
     edit_col, preview_col = st.columns([1, 1], gap="large")
-
+    
     # Editor Column
     with edit_col:
         st.session_state.resume_content = st.text_area(
@@ -139,7 +139,7 @@ def main():
             key="content_editor",
             help="Start typing to see instant preview. Use Markdown formatting for best results."
         )
-
+    
     # Preview Column
     with preview_col:
         # Header with refresh button
@@ -167,44 +167,64 @@ def main():
             """
         
         preview_display.markdown(preview_content, unsafe_allow_html=True)
-
+    
     # Export Section
     st.divider()
-    if st.button("📥 Download Professional Resume", type="primary", use_container_width=True):
+    st.subheader("Download or Save Files")
+    
+    # Save Markdown File Locally and on Server
+    if st.button("📥 Save Markdown (.md)", use_container_width=True):
+        if st.session_state.resume_content.strip():
+            # Save locally
+            st.download_button(
+                label="⬇️ Save Markdown to Computer",
+                data=st.session_state.resume_content,
+                file_name="resume.md",
+                mime="text/markdown"
+            )
+            
+            # Save on server
+            md_file_path = os.path.join(SAVE_DIR, "resume.md")
+            with open(md_file_path, "w") as f:
+                f.write(st.session_state.resume_content)
+            st.success(f"Markdown file saved on the server at: {md_file_path}")
+        else:
+            st.warning("Please add your resume content before saving.")
+    
+    # Save PDF File Locally and on Server
+    if st.button("📥 Save PDF (.pdf)", type="primary", use_container_width=True):
         if st.session_state.resume_content.strip():
             try:
                 with st.status("Creating Your Resume...", expanded=True):
-                    # Save content
-                    st.write("📁 Saving your content...")
-                    with open(INPUT_FILE, "w") as f:
+                    # Save Markdown content temporarily
+                    temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+                    with open(temp_md_path, "w") as f:
                         f.write(st.session_state.resume_content)
                     
                     # Generate PDF
-                    st.write("🖨️ Formatting professional layout...")
+                    pdf_file_path = os.path.join(SAVE_DIR, OUTPUT_FILE)
                     subprocess.run(
-                        [
-                            "pandoc", INPUT_FILE, "-o", OUTPUT_FILE
-                        ],
+                        ["pandoc", temp_md_path, "-o", pdf_file_path],
                         check=True
                     )
                     
                     # Offer download
-                    st.write("✅ Finalizing document...")
-                    with open(OUTPUT_FILE, "rb") as f:
+                    with open(pdf_file_path, "rb") as f:
                         st.download_button(
-                            "⬇️ Save to Computer",
-                            data=f,
+                            label="⬇️ Save PDF to Computer",
+                            data=f.read(),
                             file_name="professional_resume.pdf",
                             mime="application/pdf"
                         )
                     
-                    # Cleanup files
-                    os.remove(INPUT_FILE)
-                    os.remove(OUTPUT_FILE)
+                    st.success(f"PDF file saved on the server at: {pdf_file_path}")
+                    
+                    # Cleanup temporary Markdown file
+                    os.remove(temp_md_path)
             except Exception as error:
                 st.error(f"⚠️ Oops! Something went wrong: {str(error)}")
         else:
-            st.warning("Please add your resume content before downloading")
+            st.warning("Please add your resume content before saving.")
 
 if __name__ == "__main__":
     main()
