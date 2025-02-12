@@ -1,17 +1,21 @@
+/* Default styles for the resume */
 body {
     background-color: #ffffff;
     color: #333333;
-    font-family: 'Verdana', sans-serif;
+    font-family: Arial, sans-serif;
     font-size: 16px;
     line-height: 1.5;
-    margin-top: 50px;
-    margin-bottom: 50px;
-    margin-left: 50px;
-    margin-right: 50px;
+    margin: 50px;
 }
-h1, h2, h3 {
-    color: #9C5BDE; /* Theme color selected by the user */
+
+h1 {
+    color: red; /* Red color for H1 */
 }
+
+h2 {
+    color: #333333;
+}
+
 p {
     margin-bottom: 25px;
 }
