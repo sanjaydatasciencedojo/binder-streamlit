@@ -11,9 +11,7 @@ CSS_FILE_SOURCE = os.path.join(APP_DIR, "resume.css")  # Path to CSS file in the
 TEMPLATE_FILE = os.path.join(APP_DIR, "resume_template.md")  # Path to template file
 SAVE_DIR = "/home/jovyan/streamlit"  # Save .md and .pdf files in a subfolder named "streamlit"
 CSS_FILE_DESTINATION = os.path.join(SAVE_DIR, "resume.css")  # Destination path for CSS
-
 os.makedirs(SAVE_DIR, exist_ok=True)  # Create the "streamlit" folder if it doesn't exist
-
 
 def copy_css_on_startup():
     """Copies the CSS file to the target directory if it doesn't already exist."""
@@ -28,7 +26,6 @@ def copy_css_on_startup():
     else:
         print("CSS file already exists in the target directory. Skipping copy.")
 
-
 def load_file(file_path, default_content="# Default Resume Template\n\nAdd your content here.", error_message="⚠️ Oops! Something went wrong while loading the file"):
     """Generic function to load file content."""
     try:
@@ -41,7 +38,6 @@ def load_file(file_path, default_content="# Default Resume Template\n\nAdd your 
         st.sidebar.error(f"{error_message}: {str(error)}")
         return default_content
 
-
 def save_file(file_path, content, success_message="File saved successfully.", error_message="⚠️ Oops! Something went wrong while saving the file"):
     """Generic function to save content to a file."""
     try:
@@ -51,30 +47,6 @@ def save_file(file_path, content, success_message="File saved successfully.", er
     except Exception as error:
         st.sidebar.error(f"{error_message}: {str(error)}")
 
-
-def get_custom_css(theme_color, font_family, font_size, margin_top_bottom, margin_left_right, paragraph_spacing, line_spacing):
-    """Generates custom CSS based on user input."""
-    return f"""
-    body {{
-        background-color: #ffffff;
-        color: #333333;
-        font-family: '{font_family}', sans-serif;
-        font-size: {font_size}px;
-        line-height: {line_spacing};
-        margin-top: {margin_top_bottom}px;
-        margin-bottom: {margin_top_bottom}px;
-        margin-left: {margin_left_right}px;
-        margin-right: {margin_left_right}px;
-    }}
-    h1, h2, h3 {{
-        color: {theme_color};
-    }}
-    p {{
-        margin-bottom: {paragraph_spacing}px;
-    }}
-    """
-
-
 def initialize_session_state():
     """Initializes session state variables."""
     if 'resume_content' not in st.session_state:
@@ -82,14 +54,12 @@ def initialize_session_state():
     if 'last_update' not in st.session_state:
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
 
-
 def handle_import_export():
     """Handles file import/export functionality."""
     uploaded_file = st.sidebar.file_uploader("Import Markdown", type=["md"])
     if uploaded_file:
         st.session_state.resume_content = uploaded_file.read().decode("utf-8")
         st.sidebar.success("Markdown file imported successfully!")
-
 
 def configure_styling_options():
     """Configures styling options in the sidebar."""
@@ -104,7 +74,6 @@ def configure_styling_options():
         "line_spacing": st.sidebar.selectbox("Line Spacing", [1, 1.5, 2], index=1),
     }
 
-
 def render_editor_column():
     """Renders the editor column."""
     st.subheader("📝 Write Your Resume Content")
@@ -118,7 +87,6 @@ def render_editor_column():
     if st.button("🔄 Update Preview", key="refresh"):
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
 
-
 def render_preview_column(css_content):
     """Renders the preview column with CSS applied."""
     st.subheader("🔍 Live Preview")
@@ -126,6 +94,7 @@ def render_preview_column(css_content):
     if st.session_state.resume_content.strip():
         html_content = markdown.markdown(st.session_state.resume_content)
         preview_content = f"""
+        <style>{css_content}</style>
         {html_content}
         Last updated: {st.session_state.last_update}
         """
@@ -136,12 +105,10 @@ def render_preview_column(css_content):
         """
     preview_display.markdown(preview_content, unsafe_allow_html=True)
 
-
 def export_resume(file_name, css_path):
     """Handles exporting the resume as Markdown or PDF."""
     md_file_name = f"{file_name}.md"
     pdf_file_name = f"{file_name}.pdf"
-
     # Save Markdown File Locally
     if st.button("📥 Save Markdown (.md)", use_container_width=True):
         if st.session_state.resume_content.strip():
@@ -152,7 +119,6 @@ def export_resume(file_name, css_path):
             )
         else:
             st.warning("Please add your resume content before saving.")
-
     # Generate PDF and Provide Download Option
     if st.button("📥 Generate PDF (.pdf)", use_container_width=True):
         if st.session_state.resume_content.strip():
@@ -178,56 +144,49 @@ def export_resume(file_name, css_path):
         else:
             st.warning("Please add your resume content before generating the PDF.")
 
-
 def main():
     # Copy CSS file during program startup
     copy_css_on_startup()
-
+    
     # Configure page and styles
     st.set_page_config(layout="wide", page_icon="📄", page_title="Professional Resume Builder")
-
+    
     # Initialize session state
     initialize_session_state()
-
+    
     # Sidebar for Customization Options
     st.sidebar.subheader("🎨 Import / Export")
     handle_import_export()
-
+    
     # Configure Styling Options
     styling_options = configure_styling_options()
-
-    # Generate and Save Custom CSS
-    custom_css = get_custom_css(**styling_options)
-    if st.sidebar.button("Save Custom CSS", use_container_width=True):
-        save_file(CSS_FILE_DESTINATION, custom_css, success_message=f"Custom CSS saved successfully at: {CSS_FILE_DESTINATION}")
-
+    
     # Load CSS content for embedding in the preview
     css_content = load_file(CSS_FILE_DESTINATION)
-
+    
     # Apply CSS to Live Preview
     st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
-
+    
     # Main header
     st.title("📝 Professional Resume Builder")
     st.caption("Create • Preview • Download - All in Real Time")
-
+    
     # Create two-column layout
     edit_col, preview_col = st.columns([2, 3], gap="large")
-
+    
     # Editor Column
     with edit_col:
         render_editor_column()
-
+    
     # Preview Column
     with preview_col:
         render_preview_column(css_content)
-
+    
     # Export Section
     st.divider()
     st.subheader("💾 Save or Download Your Resume")
     file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
     export_resume(file_name, CSS_FILE_DESTINATION)
-
 
 if __name__ == "__main__":
     main()
