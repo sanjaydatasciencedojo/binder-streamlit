@@ -38,7 +38,7 @@ USER root
 # App Launcher
 COPY jupyter_notebook_config.py /home/${NB_USER}/.jupyter/
 # Set ownership and permissions
-RUN chown ${NB_USER}:${NB_USER} /home/${NB_USER}/.jupyter/jupyter_notebook_config.py \
+RUN chown ${NB_USER} /home/${NB_USER}/.jupyter/jupyter_notebook_config.py \
     && chmod 644 /home/${NB_USER}/.jupyter/jupyter_notebook_config.py
 USER ${NB_USER}
 
