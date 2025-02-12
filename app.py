@@ -86,8 +86,80 @@ def render_preview_column(css_content):
     if st.session_state.resume_content.strip():
         html_content = markdown.markdown(st.session_state.resume_content)
         preview_content = f"""
-        <div style="all: initial;">
-            <style>{css_content}</style>
+        <div id="resume-preview">
+            <style>
+                /* Reset all inherited styles */
+                #resume-preview {{
+                    all: initial;
+                }}
+                /* Scoped CSS for the live preview */
+                #resume-preview body {{
+                    background-color: #ffffff !important;
+                    color: #333333 !important;
+                    font-family: '{css_content['font_family']}', sans-serif !important;
+                    font-size: {css_content['font_size']}px !important;
+                    line-height: {css_content['line_spacing']} !important;
+                    margin-top: {css_content['margin_top_bottom']}px !important;
+                    margin-bottom: {css_content['margin_top_bottom']}px !important;
+                    margin-left: {css_content['margin_left_right']}px !important;
+                    margin-right: {css_content['margin_left_right']}px !important;
+                }}
+                #resume-preview h1, #resume-preview h2, #resume-preview h3 {{
+                    color: {css_content['theme_color']} !important;
+                    font-weight: bold !important;
+                    margin-top: 20px !important;
+                    margin-bottom: 10px !important;
+                }}
+                #resume-preview p {{
+                    margin-bottom: {css_content['paragraph_spacing']}px !important;
+                    text-align: justify !important;
+                }}
+                #resume-preview a {{
+                    color: #1E90FF !important;
+                    text-decoration: none !important;
+                }}
+                #resume-preview a:hover {{
+                    color: #FF4500 !important;
+                    text-decoration: underline !important;
+                }}
+                #resume-preview ul, #resume-preview ol {{
+                    margin-left: 20px !important;
+                    margin-bottom: 20px !important;
+                }}
+                #resume-preview li {{
+                    margin-bottom: 10px !important;
+                }}
+                #resume-preview table {{
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                    margin-bottom: 20px !important;
+                }}
+                #resume-preview th, #resume-preview td {{
+                    border: 1px solid #ddd !important;
+                    padding: 8px !important;
+                    text-align: left !important;
+                }}
+                #resume-preview th {{
+                    background-color: #f4f4f4 !important;
+                    color: #333333 !important;
+                }}
+                #resume-preview pre {{
+                    background-color: #f4f4f4 !important;
+                    padding: 10px !important;
+                    border-radius: 5px !important;
+                    overflow-x: auto !important;
+                    font-family: monospace !important;
+                    font-size: 14px !important;
+                    margin-bottom: 20px !important;
+                }}
+                #resume-preview code {{
+                    background-color: #f4f4f4 !important;
+                    padding: 2px 5px !important;
+                    border-radius: 3px !important;
+                    font-family: monospace !important;
+                    font-size: 14px !important;
+                }}
+            </style>
             {html_content}
         </div>
         Last updated: {st.session_state.last_update}
@@ -247,13 +319,7 @@ def main():
     
     # Preview Column
     with preview_col:
-        render_preview_column(inline_css)
+        render_preview_column(styling_options)
     
     # Export Section
     st.divider()
-    st.subheader("💾 Save or Download Your Resume")
-    file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
-    export_resume(file_name, inline_css)
-
-if __name__ == "__main__":
-    main()
