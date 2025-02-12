@@ -28,51 +28,158 @@ University of Technology (2014-2018)
 Dean's List: 6 Semesters
 """
 
-def configure_styles():
+def configure_styles(custom_css):
     """Sets up custom visual styling with professional color palette"""
-    st.markdown("""
+    st.markdown(f"""
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        .stButton button {
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        .stButton button:hover {
-            background-color: #0056b3;
-        }
-        .stTextInput input {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 8px;
-        }
-        .stTextArea textarea {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 8px;
-        }
+        {custom_css}
     </style>
     """, unsafe_allow_html=True)
+
+def save_custom_css(custom_css, css_path):
+    """Saves custom CSS to a file."""
+    try:
+        with open(css_path, "w") as css_file:
+            css_file.write(custom_css)
+        st.sidebar.success(f"Custom CSS saved successfully at: {css_path}")
+    except Exception as error:
+        st.sidebar.error(f"⚠️ Oops! Something went wrong while saving CSS: {str(error)}")
 
 def main():
     # Configure page and styles
     st.set_page_config(layout="wide", page_icon="📄", page_title="Professional Resume Builder")
-    configure_styles()
-
-    # Main header
-    st.title("Professional Resume Builder")
-    st.caption("Create • Preview • Download - All in Real Time")
 
     # Initialize session state
     if 'resume_content' not in st.session_state:
         st.session_state.resume_content = DEFAULT_TEMPLATE
     if 'last_update' not in st.session_state:
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
+    if 'pdf_generated' not in st.session_state:
+        st.session_state.pdf_generated = False
+    if 'custom_css' not in st.session_state:
+        st.session_state.custom_css = ""
+
+    # Sidebar for Customization Options
+    st.sidebar.subheader("🎨 Import / Export")
+    uploaded_file = st.sidebar.file_uploader("Import Markdown", type=["md"])
+    if uploaded_file:
+        st.session_state.resume_content = uploaded_file.read().decode("utf-8")
+        st.sidebar.success("Markdown file imported successfully!")
+
+    st.sidebar.subheader("⚙️ Export Options")
+    export_format = st.sidebar.selectbox("Export Format", ["PDF", "Markdown"])
+    paper_size = st.sidebar.selectbox("Paper Size", ["A4", "Letter"], index=0)
+    theme_color = st.sidebar.color_picker("Theme Color", "#9C5BDE", key="theme_color")
+    font_family = st.sidebar.selectbox("Font Family", ["华康宋体", "Verdana", "Arial"], index=0)
+    font_size = st.sidebar.selectbox("Font Size", [12, 16, 20], index=1)
+    margin_top_bottom = st.sidebar.selectbox("Margin (Top & Bottom)", [0, 50, 100], index=1)
+    margin_left_right = st.sidebar.selectbox("Margin (Left & Right)", [0, 50, 100], index=1)
+    paragraph_spacing = st.sidebar.selectbox("Paragraph Spacing", [0, 25, 50], index=1)
+    line_spacing = st.sidebar.selectbox("Line Spacing", [1, 1.5, 2], index=1)
+
+    # Generate Custom CSS Based on User Input
+    custom_css = f"""
+    body {{
+        background-color: #ffffff;
+        color: #333333;
+        font-family: '{font_family}', sans-serif;
+        font-size: {font_size}px;
+        line-height: {line_spacing};
+        margin-top: {margin_top_bottom}px;
+        margin-bottom: {margin_top_bottom}px;
+        margin-left: {margin_left_right}px;
+        margin-right: {margin_left_right}px;
+    }}
+    h1, h2, h3 {{
+        color: {theme_color};
+    }}
+    p {{
+        margin-bottom: {paragraph_spacing}px;
+    }}
+    """
+    st.session_state.custom_css = custom_css
+    configure_styles(custom_css)
+
+    # Save Custom CSS to File
+    css_path = os.path.join(SAVE_DIR, "custom.css")
+    if st.sidebar.button("Save Custom CSS", use_container_width=True):
+        save_custom_css(custom_css, css_path)
+
+    # Export Buttons in Sidebar
+    st.sidebar.subheader("📤 Export Resume")
+    if st.sidebar.button("Export Markdown (.md)", use_container_width=True):
+        md_file_name = "resume.md"
+        md_file_path = os.path.join(SAVE_DIR, md_file_name)
+        try:
+            with open(md_file_path, "w") as f:
+                f.write(st.session_state.resume_content)
+            st.sidebar.success(f"Markdown file saved locally at: {md_file_path}")
+        except Exception as error:
+            st.sidebar.error(f"⚠️ Oops! Something went wrong: {str(error)}")
+
+    if st.sidebar.button("Export PDF (.pdf)", use_container_width=True):
+        pdf_file_name = "resume.pdf"
+        pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
+        temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+        try:
+            # Save Markdown content temporarily
+            with open(temp_md_path, "w") as f:
+                f.write(st.session_state.resume_content)
+            # Generate PDF with Pandoc and Custom CSS
+            subprocess.run(
+                ["pandoc", temp_md_path, "-o", pdf_file_path, "--css", css_path, "--pdf-engine=xelatex", f"--variable=papersize:{paper_size.lower()}"],
+                check=True
+            )
+            st.sidebar.success(f"PDF file saved locally at: {pdf_file_path}")
+            # Cleanup temporary Markdown file
+            os.remove(temp_md_path)
+        except Exception as error:
+            st.sidebar.error(f"⚠️ Oops! Something went wrong: {str(error)}")
+
+    # Download Buttons
+    st.sidebar.subheader("📥 Download Resume")
+    if st.sidebar.button("Download Markdown (.md)", use_container_width=True):
+        st.download_button(
+            label="📥 Download Markdown (.md)",
+            data=st.session_state.resume_content,
+            file_name="resume.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+
+    if st.sidebar.button("Download PDF (.pdf)", use_container_width=True):
+        pdf_file_name = "resume.pdf"
+        pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
+        temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+        try:
+            # Save Markdown content temporarily
+            with open(temp_md_path, "w") as f:
+                f.write(st.session_state.resume_content)
+            # Generate PDF
+            subprocess.run(
+                ["pandoc", temp_md_path, "-o", pdf_file_path, "--css", css_path, "--pdf-engine=xelatex", f"--variable=papersize:{paper_size.lower()}"],
+                check=True
+            )
+            # Read the generated PDF file
+            with open(pdf_file_path, "rb") as pdf_file:
+                pdf_data = pdf_file.read()
+            # Offer PDF for download
+            st.download_button(
+                label="📥 Download PDF (.pdf)",
+                data=pdf_data,
+                file_name=pdf_file_name,
+                mime="application/pdf",
+                use_container_width=True
+            )
+            # Cleanup temporary files
+            os.remove(temp_md_path)
+            os.remove(pdf_file_path)
+        except Exception as error:
+            st.sidebar.error(f"⚠️ Oops! Something went wrong: {str(error)}")
+
+    # Main header
+    st.title("📝 Professional Resume Builder")
+    st.caption("Create • Preview • Download - All in Real Time")
 
     # Create two-column layout with better proportions
     edit_col, preview_col = st.columns([2, 3], gap="large")  # Adjusted column widths for better focus 
@@ -99,74 +206,14 @@ def main():
             html_content = markdown.markdown(st.session_state.resume_content)
             preview_content = f"""
             {html_content}
-            Last updated: {st.session_state.last_update}
+            <small style="color: #888;">Last updated: {st.session_state.last_update}</small>
             """
         else:
             preview_content = f"""
             Your formatted preview will appear here...
-            Last updated: {st.session_state.last_update}
+            <small style="color: #888;">Last updated: {st.session_state.last_update}</small>
             """
         preview_display.markdown(preview_content, unsafe_allow_html=True)
-
-    # Export Section
-    st.divider()
-    st.subheader("💾 Save or Download Your Resume")
-
-    # Custom File Name Input
-    file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
-    md_file_name = f"{file_name}.md"
-    pdf_file_name = f"{file_name}.pdf"
-
-    # Download Markdown File
-    st.markdown("### Download Markdown (.md)")
-    if st.session_state.resume_content.strip():
-        st.download_button(
-            label="📥 Download Markdown (.md)",
-            data=st.session_state.resume_content,
-            file_name=md_file_name,
-            mime="text/markdown",
-            use_container_width=True
-        )
-    else:
-        st.warning("Please add your resume content before downloading.")
-
-    # Download PDF File
-    st.markdown("### Download PDF (.pdf)")
-    if st.session_state.resume_content.strip():
-        try:
-            # Save Markdown content temporarily
-            temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
-            with open(temp_md_path, "w") as f:
-                f.write(st.session_state.resume_content)
-            
-            # Generate PDF
-            pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
-            subprocess.run(
-                ["pandoc", temp_md_path, "-o", pdf_file_path],
-                check=True
-            )
-
-            # Read the generated PDF file
-            with open(pdf_file_path, "rb") as pdf_file:
-                pdf_data = pdf_file.read()
-
-            # Offer PDF for download
-            st.download_button(
-                label="📥 Download PDF (.pdf)",
-                data=pdf_data,
-                file_name=pdf_file_name,
-                mime="application/pdf",
-                use_container_width=True
-            )
-
-            # Cleanup temporary Markdown and PDF files
-            os.remove(temp_md_path)
-            os.remove(pdf_file_path)
-
-        except Exception as error:
-            st.error(f"⚠️ Oops! Something went wrong: {str(error)}")
-    else:
-        st.warning("Please add your resume content before downloading.")
 
 if __name__ == "__main__":
     main()
