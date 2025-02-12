@@ -28,72 +28,34 @@ University of Technology (2014-2018)
 Dean's List: 6 Semesters
 """
 
-def configure_styles():
-    """Sets up custom visual styling with a modern and professional look"""
-    st.markdown("""
+DEFAULT_CSS = """
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #ffffff; /* White background */
+    color: #333333; /* Dark gray text */
+}
+h1, h2, h3 {
+    color: #007bff; /* Blue headers */
+}
+p {
+    line-height: 1.6;
+}
+.highlight {
+    color: #ff5722; /* Orange highlights */
+}
+"""
+
+def configure_styles(custom_css):
+    """Sets up custom visual styling with professional color palette"""
+    st.markdown(f"""
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        .stButton button {
-            background-color: #007bff;
-            color: white;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 16px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-        }
-        .stButton button:hover {
-            background-color: #0056b3;
-            transform: scale(1.05);
-        }
-        .stTextInput input, .stTextArea textarea {
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .stTextInput input:focus, .stTextArea textarea:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
-        }
-        .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-            color: #007bff;
-        }
-        .stMarkdown p {
-            line-height: 1.6;
-        }
-        .sidebar .sidebar-content {
-            background-color: #ffffff;
-            border-right: 1px solid #ddd;
-        }
-        .stAlert {
-            border-radius: 8px;
-            padding: 15px;
-        }
-        .stAlert.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .stAlert.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+        {custom_css}
     </style>
     """, unsafe_allow_html=True)
 
 def main():
     # Configure page and styles
     st.set_page_config(layout="wide", page_icon="📄", page_title="Professional Resume Builder")
-    configure_styles()
-
-    # Main header
-    st.title("📝 Professional Resume Builder")
-    st.caption("Create • Preview • Download - All in Real Time")
 
     # Initialize session state
     if 'resume_content' not in st.session_state:
@@ -102,6 +64,28 @@ def main():
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
     if 'pdf_generated' not in st.session_state:
         st.session_state.pdf_generated = False
+    if 'custom_css' not in st.session_state:
+        st.session_state.custom_css = DEFAULT_CSS  # Default CSS styles
+
+    # Sidebar for Custom CSS Editing
+    st.sidebar.subheader("🎨 Customize Styles")
+    st.sidebar.caption("Edit the CSS below to customize the appearance of the app.")
+    st.session_state.custom_css = st.sidebar.text_area(
+        "Custom CSS",
+        value=st.session_state.custom_css,
+        height=300,
+        help="Modify the CSS to change the look and feel of the app."
+    )
+    if st.sidebar.button("Apply Styles", use_container_width=True):
+        st.success("Custom styles applied successfully!")
+        configure_styles(st.session_state.custom_css)
+
+    # Apply initial styles
+    configure_styles(st.session_state.custom_css)
+
+    # Main header
+    st.title("📝 Professional Resume Builder")
+    st.caption("Create • Preview • Download - All in Real Time")
 
     # Create two-column layout with better proportions
     edit_col, preview_col = st.columns([2, 3], gap="large")  # Adjusted column widths for better focus 
@@ -156,20 +140,30 @@ def main():
                     f.write(st.session_state.resume_content)
                 st.success(f"Markdown file saved locally at: {md_file_path}")
 
-                # Generate PDF Locally
+                # Generate PDF Locally with Custom CSS
                 pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
                 temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+                css_path = os.path.join(SAVE_DIR, "styles.css")  # Path to custom CSS file
+                
+                # Write Markdown content to temporary file
                 with open(temp_md_path, "w") as f:
                     f.write(st.session_state.resume_content)
+                
+                # Write Custom CSS for Consistent Colors
+                with open(css_path, "w") as css_file:
+                    css_file.write(st.session_state.custom_css)
+
+                # Generate PDF with Pandoc and Custom CSS
                 subprocess.run(
-                    ["pandoc", temp_md_path, "-o", pdf_file_path],
+                    ["pandoc", temp_md_path, "-o", pdf_file_path, "--css", css_path],
                     check=True
                 )
                 st.success(f"PDF file generated locally at: {pdf_file_path}")
                 st.session_state.pdf_generated = True  # Mark PDF as generated
 
-                # Cleanup temporary Markdown file
+                # Cleanup temporary Markdown and CSS files
                 os.remove(temp_md_path)
+                os.remove(css_path)
             except Exception as error:
                 st.error(f"⚠️ Oops! Something went wrong: {str(error)}")
         else:
