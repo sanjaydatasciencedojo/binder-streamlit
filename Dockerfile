@@ -35,6 +35,8 @@ WORKDIR ${HOME}
 # Install Python dependencies
 COPY requirements.txt /tmp/
 COPY app.py /work/app.py
+COPY resume_template.md /work/resume_template.md
+COPY resume.css /work/resume.css
 RUN pip install -U pip && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
