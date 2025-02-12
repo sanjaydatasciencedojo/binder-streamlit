@@ -1,5 +1,5 @@
 # Base image
-FROM quay.io/jupyter/scipy-notebook:2024-12-23
+FROM jupyter/scipy-notebook:2023-07-17
 
 # Install system dependencies as root
 USER root
