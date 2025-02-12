@@ -8,7 +8,7 @@ from datetime import datetime
 APP_DIR = os.path.dirname(os.path.abspath(__file__))  # Directory of app.py
 CSS_FILE = os.path.join(APP_DIR, "resume.css")  # Path to CSS file in the same folder as app.py
 TEMPLATE_FILE = os.path.join(APP_DIR, "resume_template.md")  # Path to template file in the same folder as app.py
-SAVE_DIR = os.path.join(APP_DIR, "streamlit")  # Save .md and .pdf files in a subfolder named "streamlit"
+SAVE_DIR = "home/jovyan"  # Save .md and .pdf files in a subfolder named "streamlit"
 os.makedirs(SAVE_DIR, exist_ok=True)  # Create the "streamlit" folder if it doesn't exist <button class="citation-flag" data-index="1">
 
 def load_template(template_path):
