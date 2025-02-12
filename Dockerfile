@@ -52,7 +52,7 @@ USER ${NB_USER}
 RUN sh /tmp/postBuild
 
 # Create startup script
-RUN echo "streamlit run /work/app.py --server.address 0.0.0.0 --server.port 8501 --server.enableCORS False --server.enableXsrfProtection False --browser.gatherUsageStats False" > start.sh && \
+RUN echo "streamlit run /work/app.py --server.address 0.0.0.0 --server.port 8501 --server.enableCORS False --server.enableXsrfProtection False --browser.gatherUsageStats False" > start.sh
 RUN  chmod +x start.sh
 
 # Use dumb-init as entrypoint
