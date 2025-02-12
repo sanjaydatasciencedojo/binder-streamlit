@@ -5,8 +5,6 @@ import markdown
 from datetime import datetime
 
 # Application Constants
-INPUT_FILE = "resume.md"
-OUTPUT_FILE = "professional_resume.pdf"
 SAVE_DIR = "/home/jovyan/streamlit"  # Directory to save files on the server
 os.makedirs(SAVE_DIR, exist_ok=True)  # Create the directory if it doesn't exist <button class="citation-flag" data-index="5">
 
@@ -170,24 +168,31 @@ def main():
     
     # Export Section
     st.divider()
-    st.subheader("Download or Save Files")
+    st.subheader("Save Files with Custom Names")
+    
+    # Custom File Name Input
+    file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
+    md_file_name = f"{file_name}.md"
+    pdf_file_name = f"{file_name}.pdf"
     
     # Save Markdown File Locally and on Server
     if st.button("📥 Save Markdown (.md)", use_container_width=True):
         if st.session_state.resume_content.strip():
-            # Save locally
-            st.download_button(
-                label="⬇️ Save Markdown to Computer",
-                data=st.session_state.resume_content,
-                file_name="resume.md",
-                mime="text/markdown"
-            )
+            md_file_path = os.path.join(SAVE_DIR, md_file_name)
             
-            # Save on server
-            md_file_path = os.path.join(SAVE_DIR, "resume.md")
-            with open(md_file_path, "w") as f:
-                f.write(st.session_state.resume_content)
-            st.success(f"Markdown file saved on the server at: {md_file_path}")
+            # Check if file already exists
+            if os.path.exists(md_file_path):
+                overwrite = st.warning(f"A file named '{md_file_name}' already exists. Do you want to overwrite it?")
+                if overwrite:
+                    with open(md_file_path, "w") as f:
+                        f.write(st.session_state.resume_content)
+                    st.success(f"Markdown file overwritten on the server at: {md_file_path}")
+                else:
+                    st.info("Operation canceled. Please choose a different file name.")
+            else:
+                with open(md_file_path, "w") as f:
+                    f.write(st.session_state.resume_content)
+                st.success(f"Markdown file saved on the server at: {md_file_path}")
         else:
             st.warning("Please add your resume content before saving.")
     
@@ -195,32 +200,47 @@ def main():
     if st.button("📥 Save PDF (.pdf)", type="primary", use_container_width=True):
         if st.session_state.resume_content.strip():
             try:
-                with st.status("Creating Your Resume...", expanded=True):
-                    # Save Markdown content temporarily
-                    temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
-                    with open(temp_md_path, "w") as f:
-                        f.write(st.session_state.resume_content)
-                    
-                    # Generate PDF
-                    pdf_file_path = os.path.join(SAVE_DIR, OUTPUT_FILE)
-                    subprocess.run(
-                        ["pandoc", temp_md_path, "-o", pdf_file_path],
-                        check=True
-                    )
-                    
-                    # Offer download
-                    with open(pdf_file_path, "rb") as f:
-                        st.download_button(
-                            label="⬇️ Save PDF to Computer",
-                            data=f.read(),
-                            file_name="professional_resume.pdf",
-                            mime="application/pdf"
+                pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
+                
+                # Check if file already exists
+                if os.path.exists(pdf_file_path):
+                    overwrite = st.warning(f"A file named '{pdf_file_name}' already exists. Do you want to overwrite it?")
+                    if overwrite:
+                        with st.status("Creating Your Resume...", expanded=True):
+                            # Save Markdown content temporarily
+                            temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+                            with open(temp_md_path, "w") as f:
+                                f.write(st.session_state.resume_content)
+                            
+                            # Generate PDF
+                            subprocess.run(
+                                ["pandoc", temp_md_path, "-o", pdf_file_path],
+                                check=True
+                            )
+                            
+                            st.success(f"PDF file overwritten on the server at: {pdf_file_path}")
+                            
+                            # Cleanup temporary Markdown file
+                            os.remove(temp_md_path)
+                    else:
+                        st.info("Operation canceled. Please choose a different file name.")
+                else:
+                    with st.status("Creating Your Resume...", expanded=True):
+                        # Save Markdown content temporarily
+                        temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+                        with open(temp_md_path, "w") as f:
+                            f.write(st.session_state.resume_content)
+                        
+                        # Generate PDF
+                        subprocess.run(
+                            ["pandoc", temp_md_path, "-o", pdf_file_path],
+                            check=True
                         )
-                    
-                    st.success(f"PDF file saved on the server at: {pdf_file_path}")
-                    
-                    # Cleanup temporary Markdown file
-                    os.remove(temp_md_path)
+                        
+                        st.success(f"PDF file saved on the server at: {pdf_file_path}")
+                        
+                        # Cleanup temporary Markdown file
+                        os.remove(temp_md_path)
             except Exception as error:
                 st.error(f"⚠️ Oops! Something went wrong: {str(error)}")
         else:
