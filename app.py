@@ -125,28 +125,27 @@ def main():
     if 'last_update' not in st.session_state:
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
     
-    # Create two-column layout
-    edit_col, preview_col = st.columns([1, 1], gap="large")
+    # Create two-column layout with better proportions
+    edit_col, preview_col = st.columns([2, 3], gap="large")  # Adjusted column widths for better focus <button class="citation-flag" data-index="7">
     
     # Editor Column
     with edit_col:
+        st.subheader("📝 Write Your Resume Content")
         st.session_state.resume_content = st.text_area(
-            "Write your resume content:",
+            "",
             value=st.session_state.resume_content,
-            height=650,
+            height=500,  # Reduced height for better scrolling experience
             key="content_editor",
             help="Start typing to see instant preview. Use Markdown formatting for best results."
         )
+        
+        # Update button for preview
+        if st.button("🔄 Update Preview", key="refresh"):
+            st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
     
     # Preview Column
     with preview_col:
-        # Header with refresh button
-        header_col, _ = st.columns([2, 5])
-        with header_col:
-            if st.button("🔄 Update Preview", key="refresh"):
-                st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
-        
-        # Preview content
+        st.subheader("🔍 Live Preview")
         preview_display = st.empty()
         if st.session_state.resume_content.strip():
             html_content = markdown.markdown(st.session_state.resume_content)
@@ -168,7 +167,7 @@ def main():
     
     # Export Section
     st.divider()
-    st.subheader("Save Files with Custom Names")
+    st.subheader("💾 Save or Download Your Resume")
     
     # Custom File Name Input
     file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
@@ -182,7 +181,7 @@ def main():
             
             # Check if file already exists
             if os.path.exists(md_file_path):
-                overwrite = st.warning(f"A file named '{md_file_name}' already exists. Do you want to overwrite it?")
+                overwrite = st.checkbox(f"A file named '{md_file_name}' already exists. Overwrite?")
                 if overwrite:
                     with open(md_file_path, "w") as f:
                         f.write(st.session_state.resume_content)
@@ -204,7 +203,7 @@ def main():
                 
                 # Check if file already exists
                 if os.path.exists(pdf_file_path):
-                    overwrite = st.warning(f"A file named '{pdf_file_name}' already exists. Do you want to overwrite it?")
+                    overwrite = st.checkbox(f"A file named '{pdf_file_name}' already exists. Overwrite?")
                     if overwrite:
                         with st.status("Creating Your Resume...", expanded=True):
                             # Save Markdown content temporarily
