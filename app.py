@@ -41,6 +41,39 @@ def load_template(template_path):
         return "# Error Loading Template"
 
 
+def get_custom_css(theme_color, font_family, font_size, margin_top_bottom, margin_left_right, paragraph_spacing, line_spacing):
+    """Generates custom CSS based on user input."""
+    return f"""
+    body {{
+        background-color: #ffffff;
+        color: #333333;
+        font-family: '{font_family}', sans-serif;
+        font-size: {font_size}px;
+        line-height: {line_spacing};
+        margin-top: {margin_top_bottom}px;
+        margin-bottom: {margin_top_bottom}px;
+        margin-left: {margin_left_right}px;
+        margin-right: {margin_left_right}px;
+    }}
+    h1, h2, h3 {{
+        color: {theme_color};
+    }}
+    p {{
+        margin-bottom: {paragraph_spacing}px;
+    }}
+    """
+
+
+def save_css_to_file(css_content, css_path):
+    """Saves the CSS content to the specified file."""
+    try:
+        with open(css_path, "w") as css_file:
+            css_file.write(css_content)
+        st.sidebar.success(f"Custom CSS saved successfully at: {css_path}")
+    except Exception as error:
+        st.sidebar.error(f"⚠️ Oops! Something went wrong while saving CSS: {str(error)}")
+
+
 def load_css(css_path):
     """Loads CSS content from a file."""
     try:
@@ -73,6 +106,27 @@ def handle_import_export():
     if uploaded_file:
         st.session_state.resume_content = uploaded_file.read().decode("utf-8")
         st.sidebar.success("Markdown file imported successfully!")
+
+
+def configure_styling_options():
+    """Configures styling options in the sidebar."""
+    st.sidebar.subheader("⚙️ Styling Options")
+    theme_color = st.sidebar.color_picker("Theme Color", "#9C5BDE", key="theme_color")
+    font_family = st.sidebar.selectbox("Font Family", ["Arial", "Verdana", "华康宋体"], index=0)
+    font_size = st.sidebar.selectbox("Font Size", [12, 16, 20], index=1)
+    margin_top_bottom = st.sidebar.selectbox("Margin (Top & Bottom)", [0, 50, 100], index=1)
+    margin_left_right = st.sidebar.selectbox("Margin (Left & Right)", [0, 50, 100], index=1)
+    paragraph_spacing = st.sidebar.selectbox("Paragraph Spacing", [0, 25, 50], index=1)
+    line_spacing = st.sidebar.selectbox("Line Spacing", [1, 1.5, 2], index=1)
+    return {
+        "theme_color": theme_color,
+        "font_family": font_family,
+        "font_size": font_size,
+        "margin_top_bottom": margin_top_bottom,
+        "margin_left_right": margin_left_right,
+        "paragraph_spacing": paragraph_spacing,
+        "line_spacing": line_spacing,
+    }
 
 
 def render_editor_column():
@@ -171,6 +225,15 @@ def main():
     # Sidebar for Customization Options
     st.sidebar.subheader("🎨 Import / Export")
     handle_import_export()
+
+    # Configure Styling Options
+    st.sidebar.subheader("⚙️ Styling Options")
+    styling_options = configure_styling_options()
+
+    # Generate and Save Custom CSS
+    custom_css = get_custom_css(**styling_options)
+    if st.sidebar.button("Save Custom CSS", use_container_width=True):
+        save_css_to_file(custom_css, CSS_FILE_DESTINATION)
 
     # Load CSS content for embedding in the preview
     css_content = load_css(CSS_FILE_DESTINATION)
