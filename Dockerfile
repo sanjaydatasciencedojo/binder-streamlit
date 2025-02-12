@@ -1,8 +1,11 @@
-FROM python:3.9-slim
+FROM quay.io/jupyter/scipy-notebook:2024-12-23
 
+USER root
 RUN apt-get update -q && \
 	apt-get install -yqq \
 	curl \
+        texlive-latex-extra \
+	lmodern \
 	dumb-init \
 	git \
 	htop \
