@@ -76,6 +76,13 @@ def main():
     if 'pdf_generated' not in st.session_state:
         st.session_state.pdf_generated = False
 
+    # Navigation Links to JupyterLab and Jupyter Tree
+    st.sidebar.subheader("Navigation")
+    st.sidebar.markdown("""
+    <a href="/lab" target="_blank">📂 Go to JupyterLab</a><br>
+    <a href="/tree" target="_blank">📂 Go to Jupyter Notebook Tree</a>
+    """, unsafe_allow_html=True)
+
     # Create two-column layout with better proportions
     edit_col, preview_col = st.columns([2, 3], gap="large")  # Adjusted column widths for better focus 
 
