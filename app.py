@@ -29,32 +29,59 @@ Dean's List: 6 Semesters
 """
 
 def configure_styles():
-    """Sets up custom visual styling with professional color palette"""
+    """Sets up custom visual styling with a modern and professional look"""
     st.markdown("""
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f9f9f9;
             color: #333;
         }
         .stButton button {
             background-color: #007bff;
             color: white;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
         .stButton button:hover {
             background-color: #0056b3;
+            transform: scale(1.05);
         }
-        .stTextInput input {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 8px;
+        .stTextInput input, .stTextArea textarea {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
         }
-        .stTextArea textarea {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 8px;
+        .stTextInput input:focus, .stTextArea textarea:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+        }
+        .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+            color: #007bff;
+        }
+        .stMarkdown p {
+            line-height: 1.6;
+        }
+        .sidebar .sidebar-content {
+            background-color: #ffffff;
+            border-right: 1px solid #ddd;
+        }
+        .stAlert {
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .stAlert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .stAlert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -65,7 +92,7 @@ def main():
     configure_styles()
 
     # Main header
-    st.title("Professional Resume Builder")
+    st.title("📝 Professional Resume Builder")
     st.caption("Create • Preview • Download - All in Real Time")
 
     # Initialize session state
@@ -75,13 +102,6 @@ def main():
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
     if 'pdf_generated' not in st.session_state:
         st.session_state.pdf_generated = False
-
-    # Navigation Links to JupyterLab and Jupyter Tree
-    st.sidebar.subheader("Navigation")
-    st.sidebar.markdown("""
-    <a href="/lab" target="_blank">📂 Go to JupyterLab</a><br>
-    <a href="/tree" target="_blank">📂 Go to Jupyter Notebook Tree</a>
-    """, unsafe_allow_html=True)
 
     # Create two-column layout with better proportions
     edit_col, preview_col = st.columns([2, 3], gap="large")  # Adjusted column widths for better focus 
@@ -108,12 +128,12 @@ def main():
             html_content = markdown.markdown(st.session_state.resume_content)
             preview_content = f"""
             {html_content}
-            Last updated: {st.session_state.last_update}
+            <small style="color: #888;">Last updated: {st.session_state.last_update}</small>
             """
         else:
             preview_content = f"""
             Your formatted preview will appear here...
-            Last updated: {st.session_state.last_update}
+            <small style="color: #888;">Last updated: {st.session_state.last_update}</small>
             """
         preview_display.markdown(preview_content, unsafe_allow_html=True)
 
