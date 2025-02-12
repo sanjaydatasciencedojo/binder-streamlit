@@ -83,12 +83,8 @@ def render_preview_column(css_content):
     """Renders the preview column with CSS applied."""
     st.subheader("🔍 Live Preview")
     preview_display = st.empty()
-    
     if st.session_state.resume_content.strip():
-        # Convert Markdown to HTML
         html_content = markdown.markdown(st.session_state.resume_content)
-        
-        # Wrap the preview content in a div with scoped CSS
         preview_content = f"""
         <div id="resume-preview">
             <style>
@@ -212,9 +208,10 @@ def export_resume(file_name, css_content):
                 </html>
                 """
                 save_file(temp_html_path, styled_html)  # Save styled HTML
-                # Generate PDF using pandoc with xelatex
+                
+                # Generate PDF using WeasyPrint
                 subprocess.run(
-                    ["pandoc", temp_html_path, "-o", pdf_file_path, "--pdf-engine=xelatex"],
+                    ["weasyprint", temp_html_path, pdf_file_path],
                     check=True
                 )
                 st.success(f"PDF file generated successfully at: {pdf_file_path}")
@@ -316,25 +313,4 @@ def main():
     """
     
     # Main header
-    st.title("📝 Professional Resume Builder")
-    st.caption("Create • Preview • Download - All in Real Time")
-    
-    # Create two-column layout
-    edit_col, preview_col = st.columns([2, 3], gap="large")
-    
-    # Editor Column
-    with edit_col:
-        render_editor_column()
-    
-    # Preview Column
-    with preview_col:
-        render_preview_column(styling_options)
-    
-    # Export Section
-    st.divider()
-    st.subheader("💾 Save or Download Your Resume")
-    file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
-    export_resume(file_name, inline_css)
-
-if __name__ == "__main__":
-    main()
+    st.title("📝 Professional Resume
