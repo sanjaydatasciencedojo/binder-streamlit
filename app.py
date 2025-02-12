@@ -313,4 +313,25 @@ def main():
     """
     
     # Main header
-    st.title("📝 Professional Resume
+    st.title("📝 Professional Resume Builder")
+    st.caption("Create • Preview • Download - All in Real Time")
+    
+    # Create two-column layout
+    edit_col, preview_col = st.columns([2, 3], gap="large")
+    
+    # Editor Column
+    with edit_col:
+        render_editor_column()
+    
+    # Preview Column
+    with preview_col:
+        render_preview_column(styling_options)
+    
+    # Export Section
+    st.divider()
+    st.subheader("💾 Save or Download Your Resume")
+    file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
+    export_resume(file_name, inline_css)
+
+if __name__ == "__main__":
+    main()
