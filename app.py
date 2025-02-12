@@ -73,6 +73,8 @@ def main():
         st.session_state.resume_content = DEFAULT_TEMPLATE
     if 'last_update' not in st.session_state:
         st.session_state.last_update = datetime.now().strftime("%H:%M:%S")
+    if 'pdf_generated' not in st.session_state:
+        st.session_state.pdf_generated = False
 
     # Create two-column layout with better proportions
     edit_col, preview_col = st.columns([2, 3], gap="large")  # Adjusted column widths for better focus 
@@ -110,75 +112,57 @@ def main():
 
     # Export Section
     st.divider()
-    st.subheader("💾 Save or Download Your Resume")
+    st.subheader("💾 Save and Download Your Resume")
 
     # Custom File Name Input
     file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
     md_file_name = f"{file_name}.md"
     pdf_file_name = f"{file_name}.pdf"
 
-    # Save Markdown File Locally and on Server
-    if st.button("📥 Save Markdown (.md)", use_container_width=True):
-        if st.session_state.resume_content.strip():
-            md_file_path = os.path.join(SAVE_DIR, md_file_name)
-            # Check if file already exists
-            if os.path.exists(md_file_path):
-                overwrite = st.checkbox(f"A file named '{md_file_name}' already exists. Overwrite?")
-                if overwrite:
-                    with open(md_file_path, "w") as f:
-                        f.write(st.session_state.resume_content)
-                    st.success(f"Markdown file overwritten on the server at: {md_file_path}")
-                else:
-                    st.info("Operation canceled. Please choose a different file name.")
-            else:
-                with open(md_file_path, "w") as f:
-                    f.write(st.session_state.resume_content)
-                st.success(f"Markdown file saved on the server at: {md_file_path}")
-        else:
-            st.warning("Please add your resume content before saving.")
-
-    # Save PDF File Locally and on Server
-    if st.button("📥 Save PDF (.pdf)", type="primary", use_container_width=True):
+    # Save Button
+    if st.button("💾 Save & Generate PDF", use_container_width=True):
         if st.session_state.resume_content.strip():
             try:
+                # Save Markdown Locally
+                md_file_path = os.path.join(SAVE_DIR, md_file_name)
+                with open(md_file_path, "w") as f:
+                    f.write(st.session_state.resume_content)
+                st.success(f"Markdown file saved locally at: {md_file_path}")
+
+                # Generate PDF Locally
                 pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
-                # Check if file already exists
-                if os.path.exists(pdf_file_path):
-                    overwrite = st.checkbox(f"A file named '{pdf_file_name}' already exists. Overwrite?")
-                    if overwrite:
-                        with st.status("Creating Your Resume...", expanded=True):
-                            # Save Markdown content temporarily
-                            temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
-                            with open(temp_md_path, "w") as f:
-                                f.write(st.session_state.resume_content)
-                            # Generate PDF
-                            subprocess.run(
-                                ["pandoc", temp_md_path, "-o", pdf_file_path],
-                                check=True
-                            )
-                            st.success(f"PDF file overwritten on the server at: {pdf_file_path}")
-                            # Cleanup temporary Markdown file
-                            os.remove(temp_md_path)
-                    else:
-                        st.info("Operation canceled. Please choose a different file name.")
-                else:
-                    with st.status("Creating Your Resume...", expanded=True):
-                        # Save Markdown content temporarily
-                        temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
-                        with open(temp_md_path, "w") as f:
-                            f.write(st.session_state.resume_content)
-                        # Generate PDF
-                        subprocess.run(
-                            ["pandoc", temp_md_path, "-o", pdf_file_path],
-                            check=True
-                        )
-                        st.success(f"PDF file saved on the server at: {pdf_file_path}")
-                        # Cleanup temporary Markdown file
-                        os.remove(temp_md_path)
+                temp_md_path = os.path.join(SAVE_DIR, "temp_resume.md")
+                with open(temp_md_path, "w") as f:
+                    f.write(st.session_state.resume_content)
+                subprocess.run(
+                    ["pandoc", temp_md_path, "-o", pdf_file_path],
+                    check=True
+                )
+                st.success(f"PDF file generated locally at: {pdf_file_path}")
+                st.session_state.pdf_generated = True  # Mark PDF as generated
+
+                # Cleanup temporary Markdown file
+                os.remove(temp_md_path)
             except Exception as error:
                 st.error(f"⚠️ Oops! Something went wrong: {str(error)}")
         else:
             st.warning("Please add your resume content before saving.")
+
+    # Download Button (Appears Only After Saving)
+    if st.session_state.pdf_generated:
+        pdf_file_path = os.path.join(SAVE_DIR, pdf_file_name)
+        try:
+            with open(pdf_file_path, "rb") as pdf_file:
+                pdf_data = pdf_file.read()
+            st.download_button(
+                label="📥 Download PDF (.pdf)",
+                data=pdf_data,
+                file_name=pdf_file_name,
+                mime="application/pdf",
+                use_container_width=True
+            )
+        except Exception as error:
+            st.error(f"⚠️ Failed to load PDF for download: {str(error)}")
 
 if __name__ == "__main__":
     main()
