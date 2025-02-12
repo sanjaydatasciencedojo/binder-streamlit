@@ -83,17 +83,19 @@ def render_preview_column(css_content):
     """Renders the preview column with CSS applied."""
     st.subheader("🔍 Live Preview")
     preview_display = st.empty()
+    
     if st.session_state.resume_content.strip():
+        # Convert Markdown to HTML
         html_content = markdown.markdown(st.session_state.resume_content)
+        
+        # Wrap the preview content in a div with scoped CSS
         preview_content = f"""
         <div id="resume-preview">
             <style>
                 /* Reset all inherited styles */
                 #resume-preview {{
-                    all: initial;
-                }}
-                /* Scoped CSS for the live preview */
-                #resume-preview body {{
+                    all: unset;
+                    display: block;
                     background-color: #ffffff !important;
                     color: #333333 !important;
                     font-family: '{css_content['font_family']}', sans-serif !important;
@@ -103,6 +105,9 @@ def render_preview_column(css_content):
                     margin-bottom: {css_content['margin_top_bottom']}px !important;
                     margin-left: {css_content['margin_left_right']}px !important;
                     margin-right: {css_content['margin_left_right']}px !important;
+                    padding: 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
                 }}
                 #resume-preview h1, #resume-preview h2, #resume-preview h3 {{
                     color: {css_content['theme_color']} !important;
@@ -166,9 +171,13 @@ def render_preview_column(css_content):
         """
     else:
         preview_content = f"""
-        Your formatted preview will appear here...
-        Last updated: {st.session_state.last_update}
+        <div id="resume-preview">
+            <p style="color: gray; text-align: center;">Your formatted preview will appear here...</p>
+            <p style="color: gray; text-align: center;">Last updated: {st.session_state.last_update}</p>
+        </div>
         """
+    
+    # Render the preview content
     preview_display.markdown(preview_content, unsafe_allow_html=True)
 
 def export_resume(file_name, css_content):
@@ -323,3 +332,9 @@ def main():
     
     # Export Section
     st.divider()
+    st.subheader("💾 Save or Download Your Resume")
+    file_name = st.text_input("Enter a custom file name (without extension):", value="resume")
+    export_resume(file_name, inline_css)
+
+if __name__ == "__main__":
+    main()
